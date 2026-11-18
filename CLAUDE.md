@@ -27,6 +27,8 @@ Static site on GitHub Pages (https://zrecore.github.io/immersive-sea-life/). `.g
 
 ## Verifying visually
 
+Project skills in `.claude/skills/`: `verify-scene` (headless screenshot, with `--mammal`/`--school` triggers) and `add-marine-mammal` (registry-driven species). The notes below are the details behind `verify-scene`.
+
 There is no test suite. To check rendering headlessly, use `playwright-core` (installed outside the repo) with `channel: 'chrome'` and args `--use-angle=swiftshader --enable-unsafe-swiftshader`; it runs on software WebGL, so it validates correctness, not frame rate. Dev events can be triggered by importing the app's own module URLs from `performance.getEntriesByType('resource')` (a plain `import('/src/...')` yields a second module instance), then calling `emit()` from `sim/events.ts`.
 
 ## Conventions
