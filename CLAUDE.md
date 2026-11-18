@@ -20,3 +20,16 @@ Projection-mapped sea life: a full-window React Three Fiber scene of a Northern 
 - **Audio is fully procedural** (Web Audio synthesis), so there are no sample files or licenses to track.
 - **State**: `state/store.ts` (zustand, persisted subset in localStorage). Quality tiers in `config/quality.ts`; `quality: 'auto'` is downgraded by drei `PerformanceMonitor`.
 - Vite config needs `unplugin-parcel-macros` for React Spectrum S2.
+
+## Deployment
+
+Static site on GitHub Pages (https://zrecore.github.io/immersive-sea-life/). `.github/workflows/deploy.yml` builds and publishes `dist/` on every push to `main`; Vite `base` is `./` so the build works from a subpath. Pages source is set to "GitHub Actions" in repo settings.
+
+## Verifying visually
+
+There is no test suite. To check rendering headlessly, use `playwright-core` (installed outside the repo) with `channel: 'chrome'` and args `--use-angle=swiftshader --enable-unsafe-swiftshader`; it runs on software WebGL, so it validates correctness, not frame rate. Dev events can be triggered by importing the app's own module URLs from `performance.getEntriesByType('resource')` (a plain `import('/src/...')` yields a second module instance), then calling `emit()` from `sim/events.ts`.
+
+## Conventions
+
+- MIT licensed; keep shaders original (no copied Shadertoy code, whose default license is non-commercial).
+- Audio stays procedural; any added recordings need their license recorded.
