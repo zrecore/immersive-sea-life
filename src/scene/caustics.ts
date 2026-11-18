@@ -8,7 +8,8 @@ export const U = { uTime: { value: 0 } }
 // maps a seabed point p to p + D·∇h; the light density there is 1 / |det(I + D·Hess h)|, which spikes
 // into bright filaments wherever the mapping folds (det -> 0). Hess h is a closed-form sum over waves.
 const CAUSTIC = /* glsl */ `
-float caustic(vec2 p, float time) {
+// Returns det(I + D·Hess h): ~1 on calm water, -> 0 where light focuses.
+float causticDet(vec2 p, float time) {
   float hxx = 0.0, hyy = 0.0, hxy = 0.0;
   for (int i = 0; i < 6; i++) {
     float fi = float(i);
@@ -22,9 +23,7 @@ float caustic(vec2 p, float time) {
     hyy -= q * d.y * d.y * s;
     hxy -= q * d.x * d.y * s;
   }
-  float det = (1.0 + hxx) * (1.0 + hyy) - hxy * hxy;
-  float focus = 0.12 / (abs(det) + 0.12);
-  return pow(focus, 1.3);
+  return (1.0 + hxx) * (1.0 + hyy) - hxy * hxy;
 }`
 
 type Opts = { caustics?: number; vertexDecl?: string; vertex?: string }
@@ -51,8 +50,12 @@ export function withCaustics<T extends THREE.Material>(mat: T, o: Opts = {}): T 
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
-        float cs = caustic(vWPos.xz * 1.2 + vec2(vWPos.y * 0.08), uTime * 0.5);
-        totalEmissiveRadiance += diffuseColor.rgb * cs * ${k} * exp(-max(vWPos.y, 0.0) * 0.07) * vec3(0.8, 1.0, 0.9);`,
+        float cdet = causticDet(vWPos.xz * 0.9 + vec2(vWPos.y * 0.08), uTime * 0.35);
+        float cfade = exp(-length(vWPos - cameraPosition) * 0.02); // avoids shimmer at distance
+        float cbroad = 0.9 / (abs(cdet) + 0.9);                     // wide pools of light and shade
+        float cline = pow(0.25 / (abs(cdet) + 0.25), 1.5);          // bright focused folds
+        diffuseColor.rgb *= mix(1.0, 0.5 + 0.7 * cbroad, min(${k}, 1.0) * cfade);
+        totalEmissiveRadiance += diffuseColor.rgb * cline * cfade * ${k} * exp(-max(vWPos.y, 0.0) * 0.07) * vec3(0.8, 1.0, 0.9);`,
       )
   }
   mat.customProgramCacheKey = () => `caustic${k}${o.vertex ?? ''}`
