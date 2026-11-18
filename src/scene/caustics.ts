@@ -15,7 +15,7 @@ float causticDet(vec2 p, float time) {
     float fi = float(i);
     float ang = 6.2831853 * fract(fi * 0.381966 + 0.13); // well-spread wave directions
     vec2 d = vec2(cos(ang), sin(ang));
-    float k = 2.0 + fi * 0.9;                            // wavenumber
+    float k = 1.7 + fi * 0.6;                            // wavenumber (lower = larger, smoother cells)
     float w = 0.8 + fi * 0.35;                           // angular speed
     float q = 0.75 / (1.0 + 0.15 * fi);                   // curvature strength of this wave
     float s = sin(k * dot(d, p) - w * time + fi * 1.7);
@@ -53,8 +53,8 @@ export function withCaustics<T extends THREE.Material>(mat: T, o: Opts = {}): T 
         float cdet = causticDet(vWPos.xz * 0.9 + vec2(vWPos.y * 0.08), uTime * 0.35);
         float cfade = exp(-length(vWPos - cameraPosition) * 0.02); // avoids shimmer at distance
         float cbroad = 0.9 / (abs(cdet) + 0.9);                     // wide pools of light and shade
-        float cline = pow(0.25 / (abs(cdet) + 0.25), 1.5);          // bright focused folds
-        diffuseColor.rgb *= mix(1.0, 0.5 + 0.7 * cbroad, min(${k}, 1.0) * cfade);
+        float cline = pow(1.4 / (abs(cdet) + 1.4), 1.0);           // very soft bright folds
+        diffuseColor.rgb *= mix(1.0, 0.62 + 0.5 * cbroad, min(${k}, 1.0) * cfade);
         totalEmissiveRadiance += diffuseColor.rgb * cline * cfade * ${k} * exp(-max(vWPos.y, 0.0) * 0.07) * vec3(0.8, 1.0, 0.9);`,
       )
   }
